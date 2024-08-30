@@ -153,7 +153,7 @@ def parse_arguments():
 
     parser.add_argument(
         "action",
-        choices=["init", "scan"],
+        choices=["scan"],
         help="Action to peform",
     )
 
@@ -161,6 +161,7 @@ def parse_arguments():
         "--directory",
         "-d",
         type=str,
+        required=True,
         help="Storage directory",
     )
 
@@ -174,14 +175,7 @@ def parse_arguments():
 
     parser.add_argument("--tags", nargs="+", help="Tags to associate with files")
 
-    arguments = parser.parse_args()
-
-    if arguments.action == "scan":
-        if arguments.directory is None:
-            print("Error: --directory is required for 'scan' action.")
-            exit(1)
-
-    return arguments
+    return parser.parse_args()
 
 
 def main():
