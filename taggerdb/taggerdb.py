@@ -6,18 +6,6 @@ import hashlib
 import argparse
 
 
-def calculate_sha256(file_path):
-    hash_obj = hashlib.new("sha256")
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_obj.update(chunk)
-    return hash_obj.hexdigest()
-
-
-def get_file_size(file_path):
-    return os.path.getsize(file_path)
-
-
 def create_tables(conn):
     cursor = conn.cursor()
 
@@ -63,8 +51,13 @@ def scan_directory_and_insert(conn, dir_path):
         for file in files:
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, dir_path)
-            file_sha256 = calculate_sha256(file_path)
-            file_size = get_file_size(file_path)
+            file_size = os.path.getsize(file_path)
+
+            hash_obj = hashlib.new("sha256")
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_obj.update(chunk)
+            file_sha256 = hash_obj.hexdigest()
 
             cursor.execute(
                 """
@@ -80,7 +73,7 @@ def scan_directory_and_insert(conn, dir_path):
                 """,
                     (relative_path, file_sha256, file_size),
                 )
-                print(f"Added File: {relative_path}")
+                print(f'Info: Added File "{relative_path}"')
 
     conn.commit()
 
@@ -116,41 +109,79 @@ def add_tags(conn, file_id, tags):
     conn.commit()
 
 
-def main():
+def parse_arguments():
     parser = argparse.ArgumentParser(
+        prog="taggerdb",
         description=(
             "TaggerDB - A user-friendly tool designed for managing and tagging files. "
             "Ideal for developers, researchers, and anyone needing to organize files "
             "using customizable tags."
-        )
+        ),
     )
 
     parser.add_argument(
-        "--dir", "-d", type=str, required=True, help="Storage directory, required"
+        "action",
+        choices=["init", "scan"],
+        help="Action to peform",
     )
 
     parser.add_argument(
-        "--db", "-b", type=str, default="tagger.db3", help="Database file, default=tagger.db3"
+        "--directory",
+        "-d",
+        type=str,
+        help="Storage directory",
+    )
+
+    parser.add_argument(
+        "--database",
+        "-b",
+        type=str,
+        default="tagger.db3",
+        help="Database file",
     )
 
     parser.add_argument("--tags", nargs="+", help="Tags to associate with files")
 
-    args = parser.parse_args()
+    arguments = parser.parse_args()
 
-    conn = sqlite3.connect(args.db)
-    create_tables(conn)
+    if arguments.action == "scan":
+        if arguments.directory is None:
+            print("Error: --directory is required for 'scan' action.")
+            exit(1)
 
-    scan_directory_and_insert(conn, args.dir)
+    return arguments
 
-    if args.tags:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM files")
-        files = cursor.fetchall()
 
-        for file_id in files:
-            add_tags(conn, file_id[0], args.tags)
+def main():
+    arguments = parse_arguments()
 
-    conn.close()
+    match arguments.action:
+        case "init":
+            if os.path.exists(arguments.database):
+                print(f"Error: {arguments.database} already exists.")
+                exit(1)
+
+            conn = sqlite3.connect(arguments.database)
+            create_tables(conn)
+            conn.close()
+            print("Info: Database was initialized successfully!")
+        case "scan":
+            if not os.path.exists(arguments.database):
+                print(f"Error: {arguments.database} doesn't exist.")
+                exit(1)
+
+            conn = sqlite3.connect(arguments.database)
+            scan_directory_and_insert(conn, arguments.directory)
+            print("Info: Done!")
+            conn.close()
+
+    # if arguments.tags:
+    #     cursor = conn.cursor()
+    #     cursor.execute("SELECT id FROM files")
+    #     files = cursor.fetchall()
+
+    #     for file_id in files:
+    #         add_tags(conn, file_id[0], arguments.tags)
 
 
 if __name__ == "__main__":
