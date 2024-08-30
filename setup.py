@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="taggerdb",
-    version="0.1.0",
+    version="0.1.1",
     author="Angelo Oliveira Jr.",
     author_email="43245439+angelojrdev@users.noreply.github.com",
     description="A user-friendly tool designed for managing and tagging files",
