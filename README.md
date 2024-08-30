@@ -9,5 +9,4 @@ A user-friendly tool designed for managing and tagging files.
 - [ ] "tag" action to tag files using "--files" as file selector.
 - [ ] "untag" action to untag files using "--files" as file selector.
 - [ ] Detect and abort if "--files" refers to locations outside the storage.
-- [ ] "tag-description" action for adding description to tags.
 - [ ] "search" action to search for files matching tags provided.
