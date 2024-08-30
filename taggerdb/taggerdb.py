@@ -92,11 +92,19 @@ class TaggerDb:
                 file_sha256 = hash_obj.hexdigest()
 
                 cursor.execute(
-                    "SELECT 1 FROM file WHERE sha256 = ? AND size = ?",
+                    "SELECT location FROM file WHERE sha256 = ? AND size = ?",
                     (file_sha256, file_size),
                 )
 
-                if cursor.fetchone() is not None:
+                result = cursor.fetchone()
+
+                if result is not None:
+                    existing_location = result[0]
+                    if existing_location != relative_path:
+                        print(
+                            f'Warning: Duplicate to "{existing_location}" on "{relative_path}"'
+                        )
+
                     continue
 
                 cursor.execute(
