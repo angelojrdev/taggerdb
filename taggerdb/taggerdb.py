@@ -182,13 +182,18 @@ def parse_arguments():
 
 def main():
     arguments = parse_arguments()
-    taggerdb = TaggerDb(arguments.database, arguments.directory, True)
 
-    match arguments.action:
-        case "scan":
-            taggerdb.scan()
+    try:
+        taggerdb = TaggerDb(arguments.database, arguments.directory, True)
 
-    taggerdb.disconnect()
+        match arguments.action:
+            case "scan":
+                taggerdb.scan()
+
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        taggerdb.disconnect()
 
     # if arguments.tags:
     #     cursor = conn.cursor()
