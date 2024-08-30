@@ -173,7 +173,9 @@ def parse_arguments():
         help="Database file",
     )
 
-    parser.add_argument("--tags", nargs="+", help="Tags to associate with files")
+    parser.add_argument("--tags", "-t", nargs="+", help="Tags to associate")
+
+    parser.add_argument("--files", "-f", nargs="+", help="Files to select")
 
     return parser.parse_args()
 
@@ -185,7 +187,7 @@ def main():
     match arguments.action:
         case "scan":
             taggerdb.scan()
-    
+
     taggerdb.disconnect()
 
     # if arguments.tags:
