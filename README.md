@@ -1,0 +1,1 @@
+A user-friendly tool designed for managing and tagging files.
