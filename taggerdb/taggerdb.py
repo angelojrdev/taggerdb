@@ -100,12 +100,22 @@ class TaggerDb:
 
                 if result is not None:
                     existing_location = result[0]
-                    if existing_location != relative_path:
+
+                    if existing_location == relative_path:
+                        continue
+
+                    if os.path.isfile(os.path.join(root, existing_location)):
                         print(
                             f'Warning: Duplicate to "{existing_location}" on "{relative_path}"'
                         )
-
-                    continue
+                        continue
+                    else:
+                        print(f'Info: Updating entry from "{existing_location}" to "{relative_path}"')
+                        cursor.execute(
+                            "UPDATE file SET location = ? WHERE sha256 = ? AND size = ?",
+                            (relative_path, file_sha256, file_size),
+                        )
+                        continue
 
                 cursor.execute(
                     """ INSERT INTO file (location, sha256, size)
@@ -115,7 +125,7 @@ class TaggerDb:
                 print(f'Info: Added File "{relative_path}"')
 
         self.connection.commit()
-        print("Info: Done!")
+        print("Info: Scan done!")
 
 
 def add_tags(conn, file_id, tags):
@@ -202,6 +212,8 @@ def main():
         print(f"Error: {e}")
     finally:
         taggerdb.disconnect()
+
+    # "Warning: More than one file with sha256 and file size. This is unintended!"
 
     # if arguments.tags:
     #     cursor = conn.cursor()
